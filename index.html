@@ -2,151 +2,201 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gemini | Killer King Neural Studio</title>
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Roboto:wght@300;400;500&display=swap">
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     
     <style>
         :root {
-            --bg-dark: #131314;
-            --sidebar-bg: #1e1f20;
+            --bg-primary: #131314;
+            --bg-sidebar: #1e1f20;
             --text-main: #e3e3e3;
-            --input-field: #1e1f20;
-            --hover-gray: #333537;
+            --text-sub: #c4c7c5;
+            --blue-gemini: #8ab4f8;
+            --hover-state: #333537;
+            --border-color: #444746;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Google Sans', sans-serif; }
-        body { background: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
+        /* Reset & Base */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Google Sans', 'Roboto', sans-serif; }
+        body { background: var(--bg-primary); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
 
-        /* --- AUTH SCREEN (Gemini Style) --- */
-        #login-screen {
+        /* --- AUTH SCREEN (Full Detailed) --- */
+        #auth-portal {
             position: fixed; inset: 0; background: #000; z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
         }
-        .google-btn {
-            background: #fff; color: #000; padding: 12px 24px; border-radius: 50px;
-            display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; border: none;
-        }
-
-        /* --- SIDEBAR --- */
-        #sidebar {
-            width: 280px; background: var(--sidebar-bg); height: 100%; padding: 15px;
-            display: flex; flex-direction: column; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #sidebar.closed { width: 0; padding: 0; transform: translateX(-100%); }
-
-        .new-chat {
-            background: #1a1a1c; border-radius: 50px; padding: 14px 20px;
-            display: flex; align-items: center; gap: 12px; cursor: pointer; color: #8e918f; font-size: 14px;
-        }
-
-        .chat-history { flex: 1; margin-top: 20px; overflow-y: auto; }
-        .history-btn {
-            padding: 10px 15px; border-radius: 50px; font-size: 14px; cursor: pointer;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
-        }
-        .history-btn:hover { background: var(--hover-gray); }
-
-        /* --- MAIN CHAT --- */
-        .chat-container { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .auth-container { max-width: 400px; width: 100%; }
+        .gemini-logo-big { width: 100px; margin-bottom: 30px; animation: pulse-logo 2s infinite ease-in-out; }
+        @keyframes pulse-logo { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.95); } }
         
-        header { padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; }
-        .menu-icon { font-size: 24px; cursor: pointer; padding: 10px; border-radius: 50%; }
-        .menu-icon:hover { background: var(--hover-gray); }
+        .google-sign-in {
+            background: #ffffff; color: #1f1f1f; padding: 14px 28px; border-radius: 50px;
+            border: none; cursor: pointer; font-size: 16px; font-weight: 500;
+            display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;
+            transition: transform 0.2s;
+        }
+        .google-sign-in:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255,255,255,0.2); }
 
-        #chat-stream {
-            flex: 1; overflow-y: auto; padding: 40px 15% 150px;
-            scroll-behavior: smooth; display: flex; flex-direction: column; gap: 40px;
+        /* --- SIDEBAR (Pro Layout) --- */
+        #side-navigation {
+            width: 280px; background: var(--bg-sidebar); height: 100%; transition: 0.4s cubic-bezier(0.075, 0.82, 0.165, 1);
+            display: flex; flex-direction: column; padding: 15px; position: relative; z-index: 999;
+        }
+        #side-navigation.hidden { margin-left: -280px; width: 0; padding: 0; }
+
+        .btn-new {
+            background: #1a1a1c; border-radius: 50px; padding: 15px 20px;
+            display: flex; align-items: center; gap: 12px; cursor: pointer; color: #8e918f;
+            transition: 0.3s; margin-bottom: 25px; border: 1px solid transparent;
+        }
+        .btn-new:hover { background: #28292a; border-color: #444; }
+
+        .history-wrapper { flex: 1; overflow-y: auto; margin-top: 10px; }
+        .history-title { font-size: 12px; font-weight: 500; color: var(--text-sub); margin-bottom: 15px; padding-left: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .history-card {
+            padding: 12px 15px; border-radius: 50px; font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; gap: 12px; color: var(--text-main);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.2s;
+        }
+        .history-card:hover { background: var(--hover-state); }
+        .history-card svg { fill: #c4c7c5; }
+
+        /* --- MAIN DASHBOARD --- */
+        .workspace-panel { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        
+        header { 
+            padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+            background: var(--bg-primary); z-index: 10;
+        }
+        .top-left { display: flex; align-items: center; gap: 15px; }
+        .burger-icon { padding: 10px; border-radius: 50%; cursor: pointer; transition: 0.3s; }
+        .burger-icon:hover { background: var(--hover-state); }
+        
+        .gemini-title-box { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 400; }
+        .profile-img { width: 35px; height: 35px; border-radius: 50%; border: 1px solid #444; cursor: pointer; }
+
+        #chat-scroller {
+            flex: 1; overflow-y: auto; padding: 50px 18% 180px;
+            display: flex; flex-direction: column; gap: 40px; scroll-behavior: smooth;
         }
 
-        /* MESSAGE STYLING */
-        .entry { display: flex; gap: 20px; font-size: 16px; line-height: 1.6; }
-        .entry.user-entry { flex-direction: row-reverse; text-align: right; }
-        .avatar-circle { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; overflow: hidden; }
+        /* MESSAGE LOGIC (Gemini UX) */
+        .message-row { display: flex; gap: 20px; font-size: 16px; line-height: 1.7; animation: fadeIn 0.4s ease; }
+        .message-row.user-msg { flex-direction: row-reverse; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .avatar-box { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .msg-text { max-width: 85%; color: var(--text-main); position: relative; }
         
-        /* AI Response Sparkle */
-        .ai-sparkle { width: 24px; height: 24px; filter: brightness(1.5); }
-        
-        .content { max-width: 90%; position: relative; }
-        
-        /* Speaker Icon */
-        .speaker-icon {
-            margin-top: 15px; cursor: pointer; color: #c4c7c5; font-size: 18px;
-            width: fit-content; padding: 5px; border-radius: 50%; transition: 0.2s;
+        /* Code Box Special Styling */
+        pre { background: #000; border: 1px solid #333; border-radius: 12px; padding: 15px; margin: 15px 0; overflow-x: auto; position: relative; }
+        code { font-family: 'Consolas', monospace; color: #8ab4f8; font-size: 14px; }
+
+        /* AI Utilities (Listen, Copy) */
+        .ai-actions { display: flex; gap: 20px; margin-top: 15px; color: #8e918f; font-size: 12px; }
+        .action-item { cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .action-item:hover { color: #fff; }
+
+        /* --- INPUT CONSOLE (The Main Heart) --- */
+        .console-container {
+            position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%);
+            width: 70%; max-width: 850px; background: var(--bg-sidebar); border-radius: 32px;
+            padding: 10px 25px; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
         }
-        .speaker-icon:hover { background: var(--hover-gray); color: #fff; }
+        .console-container:focus-within { background: #28292a; border-color: #555; }
 
-        /* Typing Effect CSS */
-        .typing { display: inline-block; border-right: 2px solid var(--text-main); animation: blink 0.7s infinite; }
-        @keyframes blink { 50% { border-color: transparent; } }
-
-        /* --- FLOATING INPUT BAR --- */
-        .input-wrapper {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 70%; max-width: 800px; background: #1e1f20; border-radius: 30px;
-            padding: 12px 25px; display: flex; align-items: center; gap: 15px;
-        }
-
-        #prompt-in {
+        .input-row { display: flex; align-items: center; gap: 15px; }
+        #master-input {
             flex: 1; background: transparent; border: none; color: #fff;
-            font-size: 16px; outline: none; resize: none; max-height: 200px;
+            font-size: 16px; outline: none; resize: none; max-height: 250px;
+            padding: 10px 0; line-height: 1.5;
         }
+        .console-tools { display: flex; align-items: center; gap: 20px; color: var(--text-sub); }
+        .tool-icon { cursor: pointer; font-size: 22px; transition: 0.2s; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .tool-icon:hover { background: #3c4043; color: #fff; }
 
-        .tools { display: flex; gap: 20px; color: #c4c7c5; }
-        .tools div { cursor: pointer; font-size: 20px; }
-        .tools div:hover { color: #fff; }
-
-        /* Mobile Adjustments */
+        /* --- RESPONSIVE FIXES (No Cuts) --- */
         @media (max-width: 768px) {
-            .input-wrapper { width: 92%; bottom: 15px; }
-            #chat-stream { padding: 20px 20px 150px; }
-            #sidebar { position: absolute; z-index: 2000; height: 100%; box-shadow: 10px 0 30px #000; }
+            .console-container { width: 92%; bottom: 20px; padding: 8px 15px; }
+            #chat-scroller { padding: 30px 15px 150px; }
+            #side-navigation { position: absolute; left: 0; box-shadow: 20px 0 50px #000; }
         }
+
+        /* Typing & Animations */
+        .typing-cursor { display: inline-block; width: 6px; height: 18px; background: #fff; margin-left: 5px; vertical-align: middle; animation: blinker 0.8s infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        .wave-active { color: #8ab4f8 !important; animation: bounce 1s infinite alternate; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef622916b.svg" width="80" style="margin-bottom: 30px;">
-        <button class="google-btn" onclick="signIn()">
-            <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" width="18"> Sign in with Google
-        </button>
-    </div>
-
-    <div id="sidebar">
-        <div class="new-chat" onclick="location.reload()">
-            <span>＋</span> <span>New chat</span>
+    <div id="auth-portal">
+        <div class="auth-container">
+            <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef622916b.svg" class="gemini-logo-big">
+            <h1 style="font-weight: 400; font-size: 32px; margin-bottom: 10px;">Sign in to Gemini</h1>
+            <p style="color:#8e918f; margin-bottom: 40px;">Killer King Edition v1.5 Pro</p>
+            <button class="google-sign-in" onclick="startLogin()">
+                <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" width="20"> 
+                Continue with Google
+            </button>
         </div>
-        <div class="chat-history" id="chat-history"></div>
-        <div style="padding: 10px; font-size: 12px; color: #8e918f;">Killer King AI</div>
     </div>
 
-    <div class="chat-container">
+    <div id="side-navigation">
+        <div class="btn-new" onclick="location.reload()">
+            <svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="#8e918f"/></svg>
+            <span>New chat</span>
+        </div>
+        <div class="history-title">Recent Chats</div>
+        <div class="history-wrapper" id="master-history"></div>
+        <div style="padding: 10px; font-size: 11px; color: #555; text-align: center; border-top: 1px solid #333;">KILLER KING NEURAL AI</div>
+    </div>
+
+    <div class="workspace-panel">
         <header>
-            <div class="menu-icon" onclick="document.getElementById('sidebar').classList.toggle('closed')">☰</div>
-            <div style="font-size: 18px; font-weight: 500;">Gemini <span style="font-size: 12px; color: #8e918f;">Flash 1.5</span></div>
-            <img src="" id="user-pfp" class="avatar-circle">
+            <div class="top-left">
+                <div class="burger-icon" onclick="toggleNav()">☰</div>
+                <div class="gemini-title-box">
+                    Gemini <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef622916b.svg" width="20">
+                    <span style="font-size: 12px; color: #8e918f; background: #1a1a1c; padding: 2px 8px; border-radius: 4px;">Flash 1.5</span>
+                </div>
+            </div>
+            <img src="" id="user-pfp-top" class="profile-img" onclick="userAction()">
         </header>
 
-        <div id="chat-stream">
-            <h1 id="intro-text" style="font-weight: 400; font-size: 40px; color: #444746; margin-top: 100px;">Hello, Killer King</h1>
+        <div id="chat-scroller">
+            <div id="welcome-hero" style="margin-top: 10vh;">
+                <h1 style="font-size: 48px; font-weight: 400; color: #444746;">Hello, <span id="master-name-display">Killer King</span></h1>
+                <p style="font-size: 24px; color: #444746; margin-top: 5px;">How can I help you today?</p>
+            </div>
         </div>
 
-        <div class="input-wrapper">
-            <textarea id="prompt-in" placeholder="Enter a prompt here" rows="1" oninput="autoGrow(this)"></textarea>
-            <div class="tools">
-                <div onclick="startVoice()">🎙️</div>
-                <div onclick="triggerAI()" style="color:#8ab4f8">➤</div>
+        <div class="console-container">
+            <div class="input-row">
+                <textarea id="master-input" placeholder="Enter a prompt here" rows="1" oninput="growConsole(this)"></textarea>
+                <div class="console-tools">
+                    <div class="tool-icon" id="mic-btn" onclick="triggerVoice()">🎙️</div>
+                    <div class="tool-icon" onclick="processQuery()" style="color: var(--blue-gemini);">➤</div>
+                </div>
+            </div>
+            <div style="font-size: 10px; color: #5f6368; text-align: center; margin-top: 8px;">
+                Gemini may display inaccurate info, so double-check its responses. <a href="#" style="color:#8ab4f8">Your privacy & Gemini Apps</a>
             </div>
         </div>
     </div>
 
     <script>
-        // Config
+        // --- CORE DATABASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyA0R7a03Habu9c-fRnlJgXRtOkUUBRXBYk",
             authDomain: "myaicoder-6ce7a.firebaseapp.com",
@@ -158,137 +208,168 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const GEMINI_KEY = "AIzaSyDQhm4nMj3tovusetemxq1dLaAyii7NfH4";
+        const API_KEY = "AIzaSyDQhm4nMj3tovusetemxq1dLaAyii7NfH4";
 
-        let user = null;
+        let currentMaster = null;
 
-        // Auth Logic
-        function signIn() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-        auth.onAuthStateChanged(u => {
-            if(u) {
-                user = u;
-                document.getElementById('user-pfp').src = u.photoURL;
-                document.getElementById('login-screen').style.display = 'none';
-                loadSavedChats();
+        // --- AUTH & USER LOGIC ---
+        function startLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        function userAction() { if(confirm("Terminate Session?")) auth.signOut().then(() => location.reload()); }
+
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                currentMaster = user;
+                document.getElementById('user-pfp-top').src = user.photoURL;
+                document.getElementById('master-name-display').innerText = user.displayName.split(' ')[0];
+                document.getElementById('auth-portal').style.display = 'none';
+                syncHistory();
             } else {
-                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('auth-portal').style.display = 'flex';
             }
         });
 
-        // UI Helpers
-        function autoGrow(element) {
-            element.style.height = "5px";
-            element.style.height = (element.scrollHeight) + "px";
-        }
+        // --- UI DYNAMICS ---
+        function toggleNav() { document.getElementById('side-navigation').classList.toggle('hidden'); }
+        function growConsole(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight) + 'px'; }
 
-        // Main AI Function
-        async function triggerAI() {
-            const input = document.getElementById('prompt-in');
-            const query = input.value.trim();
-            if(!query) return;
+        // --- NEURAL PROCESSING (AI) ---
+        async function processQuery() {
+            const input = document.getElementById('master-input');
+            const prompt = input.value.trim();
+            if(!prompt) return;
 
-            document.getElementById('intro-text').style.display = 'none';
-            addMessage('user', query);
+            document.getElementById('welcome-hero').style.display = 'none';
+            pushMessage('user', prompt);
             input.value = "";
-            input.style.height = "auto";
+            input.style.height = 'auto';
 
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ contents: [{ parts: [{ text: query }] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
-                const data = await res.json();
-                const aiResponse = data.candidates[0].content.parts[0].text;
                 
-                addMessage('ai', aiResponse);
+                const data = await response.json();
+                const aiText = data.candidates[0].content.parts[0].text;
                 
-                db.collection("gemini_pro_chats").add({
-                    uid: user.uid,
-                    prompt: query,
-                    response: aiResponse,
+                pushMessage('ai', aiText);
+
+                // Cloud Backup (Full Sync)
+                db.collection("killer_master_chats").add({
+                    uid: currentMaster.uid,
+                    prompt: prompt,
+                    response: aiText,
                     time: firebase.firestore.FieldValue.serverTimestamp()
                 });
-            } catch (err) { addMessage('ai', "Master, the engine encountered an error."); }
+
+            } catch (err) { pushMessage('ai', "Master, the neural engine encountered an uplink error."); }
         }
 
-        // Message Handling with Typing Experience
-        function addMessage(role, text) {
-            const container = document.getElementById('chat-stream');
-            const entry = document.createElement('div');
-            entry.className = `entry ${role === 'user' ? 'user-entry' : 'ai-entry'}`;
+        function pushMessage(role, text) {
+            const scroller = document.getElementById('chat-scroller');
+            const row = document.createElement('div');
+            row.className = `message-row ${role}-msg`;
             
-            const icon = role === 'user' ? 
-                `<img src="${user.photoURL}" class="avatar-circle">` : 
-                `<img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef622916b.svg" class="ai-sparkle">`;
+            const avatar = role === 'user' ? 
+                `<img src="${currentMaster.photoURL}" class="avatar-box">` : 
+                `<div class="avatar-box"><img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ef622916b.svg" width="24"></div>`;
 
-            entry.innerHTML = `
-                <div class="avatar-circle">${icon}</div>
-                <div class="content">
-                    <div class="text-node"></div>
-                    ${role === 'ai' ? `<div class="speaker-icon" onclick="speakText(this)">🔊</div>` : ''}
+            // Heavy Markdown/Code Parsing Logic
+            let formattedText = text;
+            if (role === 'ai') {
+                formattedText = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+            }
+
+            row.innerHTML = `
+                ${avatar}
+                <div class="msg-text">
+                    <div class="text-inner"></div>
+                    ${role === 'ai' ? `
+                        <div class="ai-actions">
+                            <div class="action-item" onclick="speak(this)">🔊 Listen</div>
+                            <div class="action-item" onclick="copy(this)">📋 Copy</div>
+                        </div>
+                    ` : ''}
                 </div>
             `;
-            container.appendChild(entry);
-            
-            // Typing Animation
-            const textNode = entry.querySelector('.text-node');
+            scroller.appendChild(row);
+
+            const inner = row.querySelector('.text-inner');
             if(role === 'ai') {
-                let i = 0;
-                const interval = setInterval(() => {
-                    if(i < text.length) {
-                        textNode.innerText += text[i];
-                        i++;
-                        container.scrollTop = container.scrollHeight;
-                    } else { clearInterval(interval); }
+                let charIdx = 0;
+                inner.innerHTML = '<span class="typing-cursor"></span>';
+                const typer = setInterval(() => {
+                    if(charIdx < formattedText.length) {
+                        inner.innerHTML = formattedText.substring(0, charIdx + 1) + '<span class="typing-cursor"></span>';
+                        charIdx++;
+                        scroller.scrollTop = scroller.scrollHeight;
+                    } else {
+                        inner.innerHTML = formattedText;
+                        clearInterval(typer);
+                    }
                 }, 5);
             } else {
-                textNode.innerText = text;
+                inner.innerText = text;
             }
-            container.scrollTop = container.scrollHeight;
+            scroller.scrollTop = scroller.scrollHeight;
         }
 
-        // Voice Speaking Feature
-        function speakText(btn) {
-            const text = btn.previousElementSibling.innerText;
+        // --- UTILITIES (VOICE & AUDIO) ---
+        function speak(btn) {
+            const txt = btn.closest('.msg-text').querySelector('.text-inner').innerText;
             const synth = window.speechSynthesis;
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = 'hi-IN'; // Hindi/English support
+            const utter = new SpeechSynthesisUtterance(txt);
+            utter.lang = 'hi-IN';
             synth.speak(utter);
-            
-            btn.innerText = "🔈";
-            utter.onend = () => btn.innerText = "🔊";
+            btn.innerText = "🔈 Speaking...";
+            utter.onend = () => btn.innerText = "🔊 Listen";
         }
 
-        // Voice Recognition
-        function startVoice() {
+        function copy(btn) {
+            const txt = btn.closest('.msg-text').querySelector('.text-inner').innerText;
+            navigator.clipboard.writeText(txt);
+            btn.innerText = "✅ Copied";
+            setTimeout(() => btn.innerText = "📋 Copy", 2000);
+        }
+
+        function triggerVoice() {
             const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            const btn = document.getElementById('mic-btn');
             rec.lang = 'hi-IN';
             rec.start();
+            btn.classList.add('wave-active');
             rec.onresult = (e) => {
-                document.getElementById('prompt-in').value = e.results[0][0].transcript;
-                triggerAI();
+                btn.classList.remove('wave-active');
+                document.getElementById('master-input').value = e.results[0][0].transcript;
+                processQuery();
             };
+            rec.onerror = () => btn.classList.remove('mic-active');
         }
 
-        function loadSavedChats() {
-            db.collection("gemini_pro_chats").where("uid","==",user.uid).orderBy("time","desc").limit(15).onSnapshot(snap => {
-                const list = document.getElementById('chat-history');
+        // --- HISTORY SYNC ---
+        function syncHistory() {
+            db.collection("killer_master_chats")
+              .where("uid", "==", currentMaster.uid)
+              .orderBy("time", "desc")
+              .limit(15)
+              .onSnapshot(snap => {
+                const list = document.getElementById('master-history');
                 list.innerHTML = "";
                 snap.forEach(doc => {
                     const d = doc.data();
-                    const btn = document.createElement('div');
-                    btn.className = 'history-btn';
-                    btn.innerText = d.prompt;
-                    btn.onclick = () => {
-                        document.getElementById('intro-text').style.display = 'none';
-                        addMessage('user', d.prompt);
-                        addMessage('ai', d.response);
+                    const card = document.createElement('div');
+                    card.className = 'history-card';
+                    card.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg> ${d.prompt}`;
+                    card.onclick = () => {
+                        document.getElementById('welcome-hero').style.display = 'none';
+                        pushMessage('user', d.prompt);
+                        pushMessage('ai', d.response);
                     };
-                    list.appendChild(btn);
+                    list.appendChild(card);
                 });
             });
         }
     </script>
 </body>
-</html>
+            </html>
