@@ -93,7 +93,7 @@
         .powered-text { color: var(--text-sub); font-size: 0.8rem; margin-bottom: 5px; }
         .brand-name { font-family: 'Rajdhani'; font-size: 1.1rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; text-shadow: 0 0 10px rgba(0,212,255,0.3); }
 
-        #results-area { width: 100%; margin-top: 20px; display: none; }
+        #results-area { width: 100%; margin-top: 20px; }
         .loader { text-align: center; color: var(--primary); font-size: 1.5rem; margin: 20px 0; display: none; }
 
         .data-card {
@@ -117,7 +117,6 @@
         .lbl { color: var(--text-sub); font-size: 0.8rem; font-weight: 500; }
         .val { color: #fff; font-size: 0.9rem; font-weight: 600; text-align: right; word-break: break-all; }
 
-        /* Full-Screen Loader */
         #full-loader {
             position: fixed; top:0; left:0; width:100%; height:100%;
             background:#050813; z-index:9999; display:flex;
@@ -127,7 +126,6 @@
 </head>
 <body>
 
-    <!-- Full-Screen Loader (starts visible) -->
     <div id="full-loader">
         <i class="fas fa-spinner fa-spin" style="font-size:6rem;color:#0099ff;"></i>
         <p style="margin-top:30px;font-size:2rem;color:#fff;font-family:'Rajdhani';letter-spacing:2px;">
@@ -136,7 +134,6 @@
     </div>
 
     <div class="app-container">
-        
         <div class="logo-wrapper">
             <div class="logo-circle">KK</div>
         </div>
@@ -153,7 +150,7 @@
 
         <div class="search-card">
             <div class="input-group">
-                <input type="number" id="target" placeholder="Enter Mobile Number or CNIC">
+                <input type="text" id="target" placeholder="Enter Mobile Number or CNIC">
             </div>
             <button class="btn-main" onclick="fetchData()">RESOLVE IDENTITY</button>
         </div>
@@ -178,72 +175,82 @@
             <div class="powered-text">Elite Data Services</div>
             <div class="brand-name">POWERED BY KILLER KING</div>
         </div>
-
     </div>
 
     <script>
         const API_URL = "https://sim.f-a-k.workers.dev/?q=";
         const fullLoader = document.getElementById('full-loader');
-        const loader = document.getElementById('loader');
         const resArea = document.getElementById('results-area');
         const input = document.getElementById('target');
 
-        // Hide full loader after 3 seconds (page load feel)
+        // Hide full loader after page load
         window.addEventListener('load', () => {
             setTimeout(() => {
                 fullLoader.style.display = 'none';
-            }, 3000);
+            }, 2500);
         });
 
         async function fetchData() {
             const query = input.value.trim();
-            if(query.length < 3) {
-                alert("Please enter a valid number.");
+            if (query.length < 3) {
+                alert("Please enter a valid Mobile Number or CNIC");
                 return;
             }
 
-            // Show loader during search
             fullLoader.style.display = 'flex';
             resArea.innerHTML = '';
-            resArea.style.display = 'block';
 
             try {
-                await new Promise(r => setTimeout(r, 800)); // Fake delay
-                const req = await fetch(API_URL + query);
-                const text = await req.text();
-                console.log("Raw response:", text); // Check console for issues
+                await new Promise(r => setTimeout(r, 800)); // Fake delay for feel
+
+                const response = await fetch(API_URL + encodeURIComponent(query));
+                const text = await response.text();
+                console.log("Raw API Response:", text);
 
                 let json;
                 try {
                     json = JSON.parse(text);
-                } catch(e) {
+                } catch (e) {
                     fullLoader.style.display = 'none';
-                    resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin-top:20px;">Server kharab hai ya response galat: ${text.slice(0,100)}...</div>`;
+                    resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin:20px 0;">Invalid response from server</div>`;
                     return;
                 }
 
                 fullLoader.style.display = 'none';
 
-                if(json.status === 'success') {
+                if (json.status === 'success' && json.data) {
                     renderCards(json.data);
                 } else {
                     resArea.innerHTML = `
-                        <div style="text-align:center; color:#ffcc00; margin-top:20px; font-size:1.2rem;">
-                            Data nahi mila is baar... Sim ka number badal raha hai? 😏<br>
-                            Latest updates ke liye channel join kar lo!<br>
-                            <a href="https://whatsapp.com/channel/0029VbCN7Zg1NCrQBDWhsJ1r" target="_blank" style="color:#00ff00; font-weight:bold;">JOIN NOW</a>
+                        <div style="text-align:center; color:#ffcc00; margin-top:30px; font-size:1.1rem;">
+                            Data nahi mila is baar...<br>
+                            Latest updates ke liye channel join kar lo!<br><br>
+                            <a href="https://whatsapp.com/channel/0029VbCN7Zg1NCrQBDWhsJ1r" target="_blank" style="color:#00ff88; font-weight:bold;">JOIN CHANNEL NOW →</a>
                         </div>
                     `;
                 }
 
             } catch (e) {
+                console.error(e);
                 fullLoader.style.display = 'none';
-                resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin-top:20px;">Connection Error – Try Again!</div>`;
+                resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin:20px 0;">Connection Error - Please try again</div>`;
             }
         }
 
         function renderCards(data) {
-            let records = Array.isArray(data) ? data : (data ? : []);
+            let records = [];
+
+            if (Array.isArray(data)) {
+                records = data;
+            } else if (data && typeof data === 'object') {
+                records = [data];
+            }
+
+            if (records.length === 0) {
+                resArea.innerHTML = `<div style="text-align:center; color:#ffcc00;">No records found</div>`;
+                return;
+            }
+
             let html = '';
             records.forEach((rec, idx) => {
                 html += `
@@ -254,21 +261,28 @@
                     </div>
                     <div class="dc-body">
                 `;
-                for (const of Object.entries(rec)) {
-                    if(key === 'response_code' || key === 'credit' || key === 'api_owner') continue;
+
+                for (const [key, val] of Object.entries(rec)) {
+                    if (['response_code', 'credit', 'api_owner', 'status'].includes(key.toLowerCase())) continue;
+                    
                     html += `
                         <div class="dc-row">
-                            <span class="lbl">${key.toUpperCase()}</span>
-                            <span class="val">${val}</span>
+                            <span class="lbl">${key.replace(/_/g, ' ').toUpperCase()}</span>
+                            <span class="val">${val !== null && val !== undefined ? val : 'N/A'}</span>
                         </div>
                     `;
                 }
+
                 html += `</div></div>`;
-            });
+   g         });
+
             resArea.innerHTML = html;
         }
 
-        input.addEventListener("keypress", (e) => { if(e.key==="Enter") fetchData(); });
+        // Enter key support
+        input.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") fetchData();
+        });
     </script>
 </body>
-</html>
+    </html>
