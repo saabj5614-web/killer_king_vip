@@ -140,13 +140,14 @@
 
         <div class="search-card">
             <div class="input-group">
-                <input type="text" id="target" placeholder="Enter Mobile Number or CNIC (without dashes)">
+                <input type="text" id="target" placeholder="Enter 11 Digit Mobile Number or CNIC">
             </div>
             <button class="btn-main" onclick="fetchData()">RESOLVE IDENTITY</button>
         </div>
 
         <div id="results-area"></div>
 
+        <!-- ================== CHANNEL LINK YAHAN CHANGE KARO ================== -->
         <div class="whatsapp-section">
             <a href="https://whatsapp.com/channel/0029VbCN7Zg1NCrQBDWhsJ1r" target="_blank" class="wa-btn">
                 <i class="fab fa-whatsapp"></i>
@@ -156,6 +157,7 @@
                 </div>
             </a>
         </div>
+        <!-- ================================================================== -->
 
         <div class="footer">
             <div class="powered-text">Elite Data Services</div>
@@ -168,17 +170,16 @@
         const resArea = document.getElementById('results-area');
         const input = document.getElementById('target');
 
-        // Aapki API Key (already added)
         const API_KEY = "16f8f4696ed31faedd";
 
         window.addEventListener('load', () => {
-            setTimeout(() => { fullLoader.style.display = 'none'; }, 2000);
+            setTimeout(() => { fullLoader.style.display = 'none'; }, 1500);
         });
 
         async function fetchData() {
-            const query = input.value.trim();
+            let query = input.value.trim();
             if (query.length < 10) {
-                alert("Please enter a valid Mobile Number (11 digits) or CNIC (13 digits)");
+                alert("Please enter a valid 11 Digit Mobile Number or 13 Digit CNIC");
                 return;
             }
 
@@ -186,7 +187,7 @@
             resArea.innerHTML = '';
 
             try {
-                let cleanQuery = query.replace(/\s+/g, '').replace(/-/g, '');
+                let cleanQuery = query.replace(/\D/g, '');
                 if (cleanQuery.length === 11 && cleanQuery.startsWith('0')) {
                     cleanQuery = cleanQuery.substring(1);
                 }
@@ -196,22 +197,23 @@
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
-                fullLoader.style.display = 'none';
+                console.log("API Response:", data);
 
-                if (data.status === 200 && data.result && typeof data.result === "object" && Object.keys(data.result).length > 0) {
+                if (data.status === 200 && data.result && typeof data.result === "object") {
                     renderCards(data.result);
                 } else {
                     resArea.innerHTML = `
-                        <div style="text-align:center; color:#ffcc00; margin-top:30px; font-size:1.1rem;">
-                            Data nahi mila is baar...<br>
-                            Kisi aur number se try karen.
+                        <div style="text-align:center; color:#ffcc00; margin-top:30px; font-size:1.1rem; padding:20px;">
+                            Data nahi mila is baar...<br><br>
+                            Free API limited hai. Kisi aur number se try karen.
                         </div>`;
                 }
 
             } catch (e) {
-                console.error(e);
+                console.error("Error:", e);
+                resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin:30px 0;">Connection Error - Please try again</div>`;
+            } finally {
                 fullLoader.style.display = 'none';
-                resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin:20px 0;">Connection Error - Please try again</div>`;
             }
         }
 
@@ -235,7 +237,7 @@
                 `;
 
                 for (const [key, val] of Object.entries(rec)) {
-                    if (['response_code', 'credit', 'api_owner', 'status', 'result', 'message', 'owner'].includes(key.toLowerCase())) continue;
+                    if (['response_code', 'credit', 'api_owner', 'status', 'result', 'message'].includes(key.toLowerCase())) continue;
                     
                     const displayKey = key.replace(/_/g, ' ').toUpperCase();
                     const displayVal = val !== null && val !== undefined ? val : 'N/A';
