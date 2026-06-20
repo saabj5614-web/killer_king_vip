@@ -60,7 +60,6 @@
             width: 100%; background: var(--bg-card); border: 1px solid var(--border);
             border-radius: 16px; padding: 25px 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
-        .input-group { position: relative; margin-bottom: 20px; }
         input {
             width: 100%; background: #090c17; border: 1px solid #2a3450;
             color: #fff; padding: 16px 15px; font-size: 1.1rem; border-radius: 8px;
@@ -75,26 +74,23 @@
             cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
             font-family: 'Rajdhani'; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,153,255,0.3);
         }
-        .btn-main:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,153,255,0.5); }
+        .btn-main:hover { background: var(--primary-hover); transform: translateY(-2px); }
 
         .whatsapp-section { width: 100%; margin-top: 25px; text-align: center; }
         .wa-btn {
             display: flex; align-items: center; justify-content: center; width: 100%;
             background: linear-gradient(135deg, #1f2a40, #141b2d); border: 1px solid #2a3450;
             color: #fff; padding: 14px; border-radius: 12px; text-decoration: none;
-            font-weight: 600; font-size: 0.95rem; transition: 0.3s; overflow: hidden;
+            font-weight: 600; font-size: 0.95rem; transition: 0.3s;
         }
         .wa-btn i { font-size: 1.4rem; margin-right: 10px; color: var(--whatsapp); }
-        .wa-btn:hover { border-color: var(--whatsapp); background: rgba(37,211,102,0.05); }
-        .wa-label { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
-        .wa-small { font-size: 0.7rem; color: var(--text-sub); }
-
-        .footer { margin-top: 40px; text-align: center; }
-        .powered-text { color: var(--text-sub); font-size: 0.8rem; margin-bottom: 5px; }
-        .brand-name { font-family: 'Rajdhani'; font-size: 1.1rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; text-shadow: 0 0 10px rgba(0,212,255,0.3); }
 
         #results-area { width: 100%; margin-top: 20px; }
-        .loader { text-align: center; color: var(--primary); font-size: 1.5rem; margin: 20px 0; display: none; }
+        #full-loader {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background:#050813; z-index:9999; display:flex;
+            align-items:center; justify-content:center; flex-direction:column;
+        }
 
         .data-card {
             background: rgba(15,20,36,0.8); border-left: 4px solid var(--primary);
@@ -116,12 +112,6 @@
         .dc-row:last-child { border: none; margin: 0; padding: 0; }
         .lbl { color: var(--text-sub); font-size: 0.8rem; font-weight: 500; }
         .val { color: #fff; font-size: 0.9rem; font-weight: 600; text-align: right; word-break: break-all; }
-
-        #full-loader {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background:#050813; z-index:9999; display:flex;
-            align-items:center; justify-content:center; flex-direction:column;
-        }
     </style>
 </head>
 <body>
@@ -178,9 +168,11 @@
         const resArea = document.getElementById('results-area');
         const input = document.getElementById('target');
 
-        // Hide full loader after load
+        // Aapki API Key (already added)
+        const API_KEY = "16f8f4696ed31faedd";
+
         window.addEventListener('load', () => {
-            setTimeout(() => { fullLoader.style.display = 'none'; }, 2500);
+            setTimeout(() => { fullLoader.style.display = 'none'; }, 2000);
         });
 
         async function fetchData() {
@@ -194,34 +186,32 @@
             resArea.innerHTML = '';
 
             try {
-                // Clean number (remove leading 0 if 11 digits)
-                let cleanQuery = query.replace(/\s+/g, '');
+                let cleanQuery = query.replace(/\s+/g, '').replace(/-/g, '');
                 if (cleanQuery.length === 11 && cleanQuery.startsWith('0')) {
                     cleanQuery = cleanQuery.substring(1);
                 }
 
-                // NexOracle API (Free tier with public key from repo)
-                const apiUrl = `https://api.nexoracle.com/details/pak-sim-database?apikey=49d32e2308c704f3fa&q=${encodeURIComponent(cleanQuery)}`;
-                
+                const apiUrl = `https://api.nexoracle.com/details/pak-sim-database-free?apikey=\( {API_KEY}&q= \){encodeURIComponent(cleanQuery)}`;
+
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
                 fullLoader.style.display = 'none';
 
-                if (data.status === "success" || (data.result && data.result !== "No SIM or CNIC data found.")) {
-                    renderCards(data.result || data);
+                if (data.status === 200 && data.result && typeof data.result === "object" && Object.keys(data.result).length > 0) {
+                    renderCards(data.result);
                 } else {
                     resArea.innerHTML = `
                         <div style="text-align:center; color:#ffcc00; margin-top:30px; font-size:1.1rem;">
                             Data nahi mila is baar...<br>
-                            Koshish karen kisi aur number se ya VIP key use karen.
+                            Kisi aur number se try karen.
                         </div>`;
                 }
 
             } catch (e) {
                 console.error(e);
                 fullLoader.style.display = 'none';
-                resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin:20px 0;">Connection Error - Please try again later</div>`;
+                resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin:20px 0;">Connection Error - Please try again</div>`;
             }
         }
 
@@ -245,7 +235,7 @@
                 `;
 
                 for (const [key, val] of Object.entries(rec)) {
-                    if (['response_code', 'credit', 'api_owner', 'status', 'result', 'message'].includes(key.toLowerCase())) continue;
+                    if (['response_code', 'credit', 'api_owner', 'status', 'result', 'message', 'owner'].includes(key.toLowerCase())) continue;
                     
                     const displayKey = key.replace(/_/g, ' ').toUpperCase();
                     const displayVal = val !== null && val !== undefined ? val : 'N/A';
@@ -264,10 +254,9 @@
             resArea.innerHTML = html;
         }
 
-        // Enter key support
         input.addEventListener("keypress", (e) => {
             if (e.key === "Enter") fetchData();
         });
     </script>
 </body>
-    </html>
+            </html>
