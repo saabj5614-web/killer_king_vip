@@ -150,13 +150,9 @@
 
         <div class="search-card">
             <div class="input-group">
-                <input type="text" id="target" placeholder="Enter Mobile Number or CNIC">
+                <input type="text" id="target" placeholder="Enter Mobile Number or CNIC (without dashes)">
             </div>
             <button class="btn-main" onclick="fetchData()">RESOLVE IDENTITY</button>
-        </div>
-
-        <div id="loader" class="loader">
-            <i class="fas fa-circle-notch fa-spin"></i>
         </div>
 
         <div id="results-area"></div>
@@ -178,22 +174,19 @@
     </div>
 
     <script>
-        const API_URL = "https://sim.f-a-k.workers.dev/?q=";
         const fullLoader = document.getElementById('full-loader');
         const resArea = document.getElementById('results-area');
         const input = document.getElementById('target');
 
-        // Hide full loader after page load
+        // Hide full loader after load
         window.addEventListener('load', () => {
-            setTimeout(() => {
-                fullLoader.style.display = 'none';
-            }, 2500);
+            setTimeout(() => { fullLoader.style.display = 'none'; }, 2500);
         });
 
         async function fetchData() {
             const query = input.value.trim();
-            if (query.length < 3) {
-                alert("Please enter a valid Mobile Number or CNIC");
+            if (query.length < 10) {
+                alert("Please enter a valid Mobile Number (11 digits) or CNIC (13 digits)");
                 return;
             }
 
@@ -201,51 +194,40 @@
             resArea.innerHTML = '';
 
             try {
-                await new Promise(r => setTimeout(r, 800)); // Fake delay for feel
-
-                const response = await fetch(API_URL + encodeURIComponent(query));
-                const text = await response.text();
-                console.log("Raw API Response:", text);
-
-                let json;
-                try {
-                    json = JSON.parse(text);
-                } catch (e) {
-                    fullLoader.style.display = 'none';
-                    resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin:20px 0;">Invalid response from server</div>`;
-                    return;
+                // Clean number (remove leading 0 if 11 digits)
+                let cleanQuery = query.replace(/\s+/g, '');
+                if (cleanQuery.length === 11 && cleanQuery.startsWith('0')) {
+                    cleanQuery = cleanQuery.substring(1);
                 }
+
+                // NexOracle API (Free tier with public key from repo)
+                const apiUrl = `https://api.nexoracle.com/details/pak-sim-database?apikey=49d32e2308c704f3fa&q=${encodeURIComponent(cleanQuery)}`;
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
 
                 fullLoader.style.display = 'none';
 
-                if (json.status === 'success' && json.data) {
-                    renderCards(json.data);
+                if (data.status === "success" || (data.result && data.result !== "No SIM or CNIC data found.")) {
+                    renderCards(data.result || data);
                 } else {
                     resArea.innerHTML = `
                         <div style="text-align:center; color:#ffcc00; margin-top:30px; font-size:1.1rem;">
                             Data nahi mila is baar...<br>
-                            Latest updates ke liye channel join kar lo!<br><br>
-                            <a href="https://whatsapp.com/channel/0029VbCN7Zg1NCrQBDWhsJ1r" target="_blank" style="color:#00ff88; font-weight:bold;">JOIN CHANNEL NOW →</a>
-                        </div>
-                    `;
+                            Koshish karen kisi aur number se ya VIP key use karen.
+                        </div>`;
                 }
 
             } catch (e) {
                 console.error(e);
                 fullLoader.style.display = 'none';
-                resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin:20px 0;">Connection Error - Please try again</div>`;
+                resArea.innerHTML = `<div style="text-align:center; color:#ff4444; margin:20px 0;">Connection Error - Please try again later</div>`;
             }
         }
 
-        function renderCards(data) {
-            let records = [];
-
-            if (Array.isArray(data)) {
-                records = data;
-            } else if (data && typeof data === 'object') {
-                records = [data];
-            }
-
+        function renderCards(result) {
+            let records = Array.isArray(result) ? result : (result ? [result] : []);
+            
             if (records.length === 0) {
                 resArea.innerHTML = `<div style="text-align:center; color:#ffcc00;">No records found</div>`;
                 return;
@@ -263,18 +245,21 @@
                 `;
 
                 for (const [key, val] of Object.entries(rec)) {
-                    if (['response_code', 'credit', 'api_owner', 'status'].includes(key.toLowerCase())) continue;
+                    if (['response_code', 'credit', 'api_owner', 'status', 'result', 'message'].includes(key.toLowerCase())) continue;
+                    
+                    const displayKey = key.replace(/_/g, ' ').toUpperCase();
+                    const displayVal = val !== null && val !== undefined ? val : 'N/A';
                     
                     html += `
                         <div class="dc-row">
-                            <span class="lbl">${key.replace(/_/g, ' ').toUpperCase()}</span>
-                            <span class="val">${val !== null && val !== undefined ? val : 'N/A'}</span>
+                            <span class="lbl">${displayKey}</span>
+                            <span class="val">${displayVal}</span>
                         </div>
                     `;
                 }
 
                 html += `</div></div>`;
-   g         });
+            });
 
             resArea.innerHTML = html;
         }
